@@ -19,16 +19,14 @@ const commentSchema = new mongoose.Schema({
         {
             author: {
                 name: {
-                    type: String,
-                    required: true
+                    type: String
                 },
                 image: {
                     type: String
                 }
             },
             body: {
-                type: String,
-                required: true
+                type: String
             },
             date: {
                 type: Date,
