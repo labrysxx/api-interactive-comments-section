@@ -90,6 +90,10 @@ async function corrigeComentario(request, response) {
             comentarioEncontrado.meta.votes = request.body.meta.votes;
         }
 
+        if (request.body.answer) {
+            comentarioEncontrado.answers.push(request.body.answer);
+        }
+
         const comentarioAtualizadoNoBancoDeDados = await comentarioEncontrado.save();
 
         response.json(comentarioAtualizadoNoBancoDeDados);
