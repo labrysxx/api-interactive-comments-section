@@ -26,32 +26,33 @@ async function mostraComentario(request, response) {
 
 //POST
 async function criaComentario(request, response) {
-    try {
-        const comentarioEncontrado = await Comment.findById(request.params.id);
-
-        if (!comentarioEncontrado) {
-            return response.status(404).json({ mensagem: 'Comentário não encontrado' });
-        }
-
-        const novaResposta = {
+    const novoComentario = new Comment({
+        author: {
+            name: request.body.author.name,
+            image: request.body.author.image
+        },
+        body: request.body.body,
+        answers: request.body.answers.map(answer => ({
             author: {
-                name: request.body.author.name,
-                image: request.body.author.image
+                name: answer.author.name,
+                image: answer.author.image
             },
-            body: request.body.body,
-            date: request.body.date,
-            image: request.body.image,
-            votes: request.body.votes
-        };
+            body: answer.body,
+            date: answer.date,
+            image: answer.image,
+            votes: answer.votes
+        })),
+        date: request.body.date,
+        meta: {
+            votes: request.body.meta.votes
+        }
+    })
 
-        comentarioEncontrado.answers.push(novaResposta);
-
-        const comentarioAtualizado = await comentarioEncontrado.save();
-
-        response.status(201).json(comentarioAtualizado);
-    } catch (erro) {
-        console.log(erro);
-        response.status(500).json({ mensagem: 'Ocorreu um erro ao adicionar a resposta' });
+    try {
+        const comentarioCriado = await novoComentario.save()
+        response.status(201).json(comentarioCriado)
+    } catch(erro) {
+        console.log(erro)
     }
 }
 
@@ -59,6 +60,22 @@ async function criaComentario(request, response) {
 async function corrigeComentario(request, response) {
     try {
         const comentarioEncontrado = await Comment.findById(request.params.id);
+
+        if(request.body.answer) {
+            // Criar um novo objeto de resposta
+            const novaResposta = {
+                author: {
+                    name: request.body.author.name,
+                    image: request.body.author.image
+                },
+                body: request.body.body,
+                date: request.body.date,
+                votes: request.body.votes
+            };
+
+            // Adicionar a nova resposta ao array de respostas do comentário
+            comentarioEncontrado.answers.push(novaResposta);
+        }
 
         if (request.body.author.name) {
             comentarioEncontrado.author.name = request.body.author.name;
@@ -80,7 +97,6 @@ async function corrigeComentario(request, response) {
                 },
                 body: answer.body,
                 date: answer.date,
-                image: answer.image,
                 votes: answer.votes
             }));
         }

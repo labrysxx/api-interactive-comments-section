@@ -29,9 +29,6 @@ const commentSchema = new mongoose.Schema({
                 type: Date,
                 default: Date.now
             },
-            image: {
-                type: String
-            },
             votes: {
                 type: Number,
                 default: 0
