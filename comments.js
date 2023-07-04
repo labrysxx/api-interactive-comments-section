@@ -61,16 +61,18 @@ async function corrigeComentario(request, response) {
     try {
         const comentarioEncontrado = await Comment.findById(request.params.id);
 
-        if(request.body.answer) {
+        if(request.body.answers) {
             // Criar um novo objeto de resposta
             const novaResposta = {
                 author: {
-                    name: request.body.author.name,
-                    image: request.body.author.image
+                    name: request.body.answers.author.name,
+                    image: request.body.answers.author.image
                 },
-                body: request.body.body,
-                date: request.body.date,
-                votes: request.body.votes
+                body: request.body.answers.body,
+                date: request.body.answers.date,
+                meta: {
+                    votes: request.body.answers.meta.votes
+                }
             };
 
             // Adicionar a nova resposta ao array de respostas do comentário
