@@ -26,33 +26,32 @@ async function mostraComentario(request, response) {
 
 //POST
 async function criaComentario(request, response) {
-    const novoComentario = new Comment({
-        author: {
-            name: request.body.author.name,
-            image: request.body.author.image
-        },
-        body: request.body.body,
-        answers: request.body.answers.map(answer => ({
-            author: {
-                name: answer.author.name,
-                image: answer.author.image
-            },
-            body: answer.body,
-            date: answer.date,
-            image: answer.image,
-            votes: answer.votes
-        })),
-        date: request.body.date,
-        meta: {
-            votes: request.body.meta.votes
-        }
-    })
-
     try {
-        const comentarioCriado = await novoComentario.save()
-        response.status(201).json(comentarioCriado)
-    } catch(erro) {
-        console.log(erro)
+        const comentarioEncontrado = await Comment.findById(request.params.id);
+
+        if (!comentarioEncontrado) {
+            return response.status(404).json({ mensagem: 'Comentário não encontrado' });
+        }
+
+        const novaResposta = {
+            author: {
+                name: request.body.author.name,
+                image: request.body.author.image
+            },
+            body: request.body.body,
+            date: request.body.date,
+            image: request.body.image,
+            votes: request.body.votes
+        };
+
+        comentarioEncontrado.answers.push(novaResposta);
+
+        const comentarioAtualizado = await comentarioEncontrado.save();
+
+        response.status(201).json(comentarioAtualizado);
+    } catch (erro) {
+        console.log(erro);
+        response.status(500).json({ mensagem: 'Ocorreu um erro ao adicionar a resposta' });
     }
 }
 
@@ -88,10 +87,6 @@ async function corrigeComentario(request, response) {
 
         if (request.body.meta.votes) {
             comentarioEncontrado.meta.votes = request.body.meta.votes;
-        }
-
-        if (request.body.answer) {
-            comentarioEncontrado.answers.push(request.body.answer);
         }
 
         const comentarioAtualizadoNoBancoDeDados = await comentarioEncontrado.save();
