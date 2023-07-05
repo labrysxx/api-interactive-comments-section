@@ -39,7 +39,6 @@ async function criaComentario(request, response) {
             },
             body: answer.body,
             date: answer.date,
-            image: answer.image,
             votes: answer.votes
         })),
         date: request.body.date,
@@ -76,7 +75,7 @@ async function respondeComentario(request, response) {
             body: body,
             date: new Date(),
             votes: 0,
-            answeredBy: author.name
+            answers: []
         };
 
         comentarioEncontrado.answers.push(novaResposta);
@@ -130,13 +129,22 @@ async function corrigeComentario(request, response) {
     }
 }
 
-//DELETE
+// DELETE /comments/:id
 async function deletaComentario(request, response) {
     try {
-        await Comment.findByIdAndDelete(request.params.id)
-        response.json({ menssagem: 'Comentario deletado com sucesso!'})
-    } catch(erro) {
-        console.log(erro)
+        const comentarioExcluido = await Comment.findByIdAndDelete(request.params.id);
+
+        if (!comentarioExcluido) {
+            return response.status(404).json({ message: 'Comentário não encontrado.' });
+        }
+
+        // Exclui todas as respostas associadas ao comentário
+        await Comment.deleteMany({ _id: { $in: comentarioExcluido.answers } });
+
+        response.json({ message: 'Comentário excluído com sucesso.' });
+    } catch (erro) {
+        console.log(erro);
+        response.status(500).json({ message: 'Ocorreu um erro ao excluir o comentário.' });
     }
 }
 
