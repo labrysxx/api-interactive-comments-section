@@ -24,7 +24,7 @@ async function mostraComentario(request, response) {
     }
 }
 
-//POST
+//POST /comments/:id
 async function criaComentario(request, response) {
     const novoComentario = new Comment({
         author: {
@@ -56,28 +56,43 @@ async function criaComentario(request, response) {
     }
 }
 
+// POST /comments/:id/answers
+async function respondeComentario(request, response) {
+    const commentId = request.params.id;
+    const { author, body } = request.body;
+
+    try {
+        const comentarioEncontrado = await Comment.findById(commentId);
+
+        if (!comentarioEncontrado) {
+            return response.status(404).json({ message: 'Comentário não encontrado.' });
+        }
+
+        const novaResposta = {
+            author: {
+                name: author.name,
+                image: author.image,
+            },
+            body: body,
+            date: new Date(),
+            votes: 0,
+            answeredBy: author.name
+        };
+
+        comentarioEncontrado.answers.push(novaResposta);
+        const comentarioAtualizado = await comentarioEncontrado.save();
+
+        response.status(201).json(comentarioAtualizado);
+    } catch (erro) {
+        console.log(erro);
+        response.status(500).json({ message: 'Ocorreu um erro ao responder ao comentário.' });
+    }
+}
+
 //PATCH
 async function corrigeComentario(request, response) {
     try {
         const comentarioEncontrado = await Comment.findById(request.params.id);
-
-        if(request.body.answers) {
-            // Criar um novo objeto de resposta
-            const novaResposta = {
-                author: {
-                    name: request.body.answers.author.name,
-                    image: request.body.answers.author.image
-                },
-                body: request.body.answers.body,
-                date: request.body.answers.date,
-                meta: {
-                    votes: request.body.answers.meta.votes
-                }
-            };
-
-            // Adicionar a nova resposta ao array de respostas do comentário
-            comentarioEncontrado.answers.push(novaResposta);
-        }
 
         if (request.body.author.name) {
             comentarioEncontrado.author.name = request.body.author.name;
@@ -132,6 +147,7 @@ function mostraPorta() {
 
 app.use(router.get('/comments', mostraComentario)) // configurei rota GET
 app.use(router.post('/comments', criaComentario)) // configurei rota POST
+app.post('/comments/:id/answers', respondeComentario);
 app.use(router.patch('/comments/:id', corrigeComentario)) // configurei rota PATCH
 app.use(router.delete('/comments/:id', deletaComentario)) // configurei rota DELETE
 app.listen(porta, mostraPorta) // servidor ouvindo a porta
