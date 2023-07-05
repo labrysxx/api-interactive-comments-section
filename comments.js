@@ -88,6 +88,46 @@ async function respondeComentario(request, response) {
     }
 }
 
+// POST /comments/:commentId/answers/:answerId
+async function adicionaResposta(request, response) {
+    const commentId = request.params.commentId;
+    const answerId = request.params.answerId;
+    const { author, body } = request.body;
+
+    try {
+        const comentarioEncontrado = await Comment.findById(commentId);
+
+        if (!comentarioEncontrado) {
+            return response.status(404).json({ message: 'Comentário não encontrado.' });
+        }
+
+        const respostaEncontrada = comentarioEncontrado.answers.id(answerId);
+
+        if (!respostaEncontrada) {
+            return response.status(404).json({ message: 'Resposta não encontrada.' });
+        }
+
+        const novaResposta = {
+            author: {
+                name: author.name,
+                image: author.image,
+            },
+            body: body,
+            date: new Date(),
+            votes: 0,
+            answers: [],
+        };
+
+        respostaEncontrada.answers.push(novaResposta);
+        const comentarioAtualizado = await comentarioEncontrado.save();
+
+        response.status(201).json(comentarioAtualizado);
+    } catch (erro) {
+        console.log(erro);
+        response.status(500).json({ message: 'Ocorreu um erro ao adicionar a resposta.' });
+    }
+}
+
 //PATCH
 async function corrigeComentario(request, response) {
     try {
@@ -155,7 +195,8 @@ function mostraPorta() {
 
 app.use(router.get('/comments', mostraComentario)) // configurei rota GET
 app.use(router.post('/comments', criaComentario)) // configurei rota POST
-app.post('/comments/:id/answers', respondeComentario);
+app.use(router.post('/comments/:id/answers', respondeComentario)) // rota POST para responder comentário
+app.use(router.post('/comments/:commentId/answers/:answerId', adicionaResposta)) //rota POST para responder resposta
 app.use(router.patch('/comments/:id', corrigeComentario)) // configurei rota PATCH
 app.use(router.delete('/comments/:id', deletaComentario)) // configurei rota DELETE
 app.listen(porta, mostraPorta) // servidor ouvindo a porta

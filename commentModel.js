@@ -25,6 +25,30 @@ const commentSchema = new mongoose.Schema({
             body: {
                 type: String,
             },
+            answers: [
+                {
+                    author: {
+                        name: {
+                            type: String
+                        },
+                        image: {
+                            type: String
+                        }
+                    },
+                    body: {
+                        type: String
+                    },
+                    date: {
+                        type: Date,
+                        default: Date.now,
+                    },
+                    votes: {
+                        type: Number,
+                        default: 0,
+                    }
+                }
+
+            ],
             date: {
                 type: Date,
                 default: Date.now,
