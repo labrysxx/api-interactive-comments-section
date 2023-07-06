@@ -169,6 +169,45 @@ async function corrigeComentario(request, response) {
     }
 }
 
+// PATCH /comments/:id/answers/:answerId
+async function corrigeRespostaComentario(request, response) {
+    const commentId = request.params.id;
+    const answerId = request.params.answerId;
+    const {author, body} = request.body;
+
+    try {
+        const comentarioEncontrado = await Comment.findById(commentId);
+
+        if (!comentarioEncontrado) {
+            return response.status(404).json({message: 'Comentário não encontrado.'});
+        }
+
+        const respostaEncontrada = comentarioEncontrado.answers.id(answerId);
+
+        if (!respostaEncontrada) {
+            return response.status(404).json({message: 'Resposta não encontrada.'});
+        }
+
+        if (author.name) {
+            respostaEncontrada.author.name = author.name;
+        }
+
+        if (author.image) {
+            respostaEncontrada.author.image = author.image;
+        }
+
+        if (body) {
+            respostaEncontrada.body = body;
+        }
+
+        const comentarioAtualizado = await comentarioEncontrado.save();
+
+        response.json(comentarioAtualizado);
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 // DELETE /comments/:id
 async function deletaComentario(request, response) {
     try {
@@ -263,6 +302,7 @@ app.use(router.post('/comments', criaComentario)) // configurei rota POST
 app.use(router.post('/comments/:id/answers', respondeComentario)) // rota POST para responder comentário
 app.use(router.post('/comments/:commentId/answers/:answerId', adicionaResposta)) //rota POST para responder resposta
 app.use(router.patch('/comments/:id', corrigeComentario)) // configurei rota PATCH
+app.use(router.patch('/comments/:id/answers/:answerId', corrigeRespostaComentario))
 app.use(router.delete('/comments/:id', deletaComentario)) // configurei rota DELETE
 app.use(router.delete('/comments/:commentId/answers/:answerId', deletaResposta)); // adiciona a rota DELETE para excluir uma resposta
 app.use(router.delete('/comments/:commentId/answers/:answerId/replies/:replyId', deletaRespostaDeResposta));
