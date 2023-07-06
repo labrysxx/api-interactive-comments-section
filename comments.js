@@ -218,6 +218,41 @@ async function deletaResposta(request, response) {
     }
 }
 
+//DELETE /comments/:commentId/answers/:answerId/replies/:replyId
+async function deletaRespostaDeResposta(request, response) {
+    try {
+        const commentId = request.params.commentId;
+        const answerId = request.params.answerId;
+        const replyId = request.params.replyId;
+
+        const comentarioEncontrado = await Comment.findById(commentId);
+
+        if (!comentarioEncontrado) {
+            return response.status(404).json({ message: 'Comentário não encontrado.' });
+        }
+
+        const respostaEncontrada = comentarioEncontrado.answers.id(answerId);
+
+        if (!respostaEncontrada) {
+            return response.status(404).json({ message: 'Resposta não encontrada.' });
+        }
+
+        const respostaDeRespostaEncontrada = respostaEncontrada.answers.id(replyId);
+
+        if (!respostaDeRespostaEncontrada) {
+            return response.status(404).json({ message: 'Resposta de resposta não encontrada.' });
+        }
+
+        respostaEncontrada.answers.pull(respostaDeRespostaEncontrada._id);
+        await comentarioEncontrado.save();
+
+        response.json({ message: 'Resposta de resposta excluída com sucesso.' });
+    } catch (erro) {
+        console.log(erro);
+        response.status(500).json({ message: 'Ocorreu um erro ao excluir a resposta de resposta.' });
+    }
+}
+
 //PORTA
 function mostraPorta() {
     console.log(`Servidor criado e rodando na porta ${porta}`)
@@ -230,4 +265,5 @@ app.use(router.post('/comments/:commentId/answers/:answerId', adicionaResposta))
 app.use(router.patch('/comments/:id', corrigeComentario)) // configurei rota PATCH
 app.use(router.delete('/comments/:id', deletaComentario)) // configurei rota DELETE
 app.use(router.delete('/comments/:commentId/answers/:answerId', deletaResposta)); // adiciona a rota DELETE para excluir uma resposta
+app.use(router.delete('/comments/:commentId/answers/:answerId/replies/:replyId', deletaRespostaDeResposta));
 app.listen(porta, mostraPorta) // servidor ouvindo a porta
