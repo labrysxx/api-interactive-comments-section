@@ -188,6 +188,36 @@ async function deletaComentario(request, response) {
     }
 }
 
+// DELETE /comments/:commentId/answers/:answerId
+async function deletaResposta(request, response) {
+    try {
+        const commentId = request.params.commentId;
+        const answerId = request.params.answerId;
+
+        const comentarioEncontrado = await Comment.findById(commentId);
+
+        if (!comentarioEncontrado) {
+            return response.status(404).json({ message: 'Comentário não encontrado.' });
+        }
+
+        const respostaEncontrada = comentarioEncontrado.answers.id(answerId);
+
+        if (!respostaEncontrada) {
+            return response.status(404).json({ message: 'Resposta não encontrada.' });
+        }
+
+        const indiceResposta = comentarioEncontrado.answers.findIndex(answer => answer._id.equals(answerId));
+
+        comentarioEncontrado.answers.splice(indiceResposta, 1);
+        await comentarioEncontrado.save();
+
+        response.json({ message: 'Resposta excluída com sucesso.' });
+    } catch (erro) {
+        console.log(erro);
+        response.status(500).json({ message: 'Ocorreu um erro ao excluir a resposta.' });
+    }
+}
+
 //PORTA
 function mostraPorta() {
     console.log(`Servidor criado e rodando na porta ${porta}`)
@@ -199,4 +229,5 @@ app.use(router.post('/comments/:id/answers', respondeComentario)) // rota POST p
 app.use(router.post('/comments/:commentId/answers/:answerId', adicionaResposta)) //rota POST para responder resposta
 app.use(router.patch('/comments/:id', corrigeComentario)) // configurei rota PATCH
 app.use(router.delete('/comments/:id', deletaComentario)) // configurei rota DELETE
+app.use(router.delete('/comments/:commentId/answers/:answerId', deletaResposta)); // adiciona a rota DELETE para excluir uma resposta
 app.listen(porta, mostraPorta) // servidor ouvindo a porta
