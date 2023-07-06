@@ -208,6 +208,54 @@ async function corrigeRespostaComentario(request, response) {
     }
 }
 
+// PATCH /comments/:id/answers/:answerId/replies/:replyId
+async function corrigeRespostaDeRespostaComentario(request, response) {
+    const commentId = request.params.id;
+    const answerId = request.params.answerId;
+    const replyId = request.params.replyId;
+    const { author, body } = request.body;
+
+    try {
+        const comentarioEncontrado = await Comment.findById(commentId);
+
+        if (!comentarioEncontrado) {
+            return response.status(404).json({ message: 'Comentário não encontrado.' });
+        }
+
+        const respostaEncontrada = comentarioEncontrado.answers.id(answerId);
+
+        if (!respostaEncontrada) {
+            return response.status(404).json({ message: 'Resposta não encontrada.' });
+        }
+
+        const respostaDeRespostaEncontrada = respostaEncontrada.answers.id(replyId);
+
+        if (!respostaDeRespostaEncontrada) {
+            return response.status(404).json({ message: 'Resposta de resposta não encontrada.' });
+        }
+
+        if (author.name) {
+            respostaDeRespostaEncontrada.author.name = author.name;
+        }
+
+        if (author.image) {
+            respostaDeRespostaEncontrada.author.image = author.image;
+        }
+
+        if (body) {
+            respostaDeRespostaEncontrada.body = body;
+        }
+
+        const comentarioAtualizado = await comentarioEncontrado.save();
+
+        response.json(comentarioAtualizado);
+    } catch (error) {
+        console.log(error);
+        response.status(500).json({ message: 'Ocorreu um erro ao corrigir a resposta de resposta do comentário.' });
+    }
+}
+
+
 // DELETE /comments/:id
 async function deletaComentario(request, response) {
     try {
@@ -303,6 +351,7 @@ app.use(router.post('/comments/:id/answers', respondeComentario)) // rota POST p
 app.use(router.post('/comments/:commentId/answers/:answerId', adicionaResposta)) //rota POST para responder resposta
 app.use(router.patch('/comments/:id', corrigeComentario)) // configurei rota PATCH
 app.use(router.patch('/comments/:id/answers/:answerId', corrigeRespostaComentario))
+app.use(router.patch('/comments/:id/answers/:answerId/replies/:replyId', corrigeRespostaDeRespostaComentario))
 app.use(router.delete('/comments/:id', deletaComentario)) // configurei rota DELETE
 app.use(router.delete('/comments/:commentId/answers/:answerId', deletaResposta)); // adiciona a rota DELETE para excluir uma resposta
 app.use(router.delete('/comments/:commentId/answers/:answerId/replies/:replyId', deletaRespostaDeResposta));
